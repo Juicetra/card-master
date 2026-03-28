@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Card Master">
+<meta name="theme-color" content="#080b12">
+<title>Card Master</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080b12;--surface:#111520;--s2:#181d2b;--s3:#1f2538;--s4:#262d42;
+  --gold:#c8a84b;--gold2:#e6c76e;--gold3:#f4dfa0;
+  --ir:#5aabff;--sir:#c47dff;
+  --text:#eeecea;--t2:#9a96aa;--t3:#5e5a70;
+  --green:#36d47a;--red:#ff5c5c;--amber:#ffb03a;
+  --r:14px;--rsm:10px;--rxs:7px;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bot: env(safe-area-inset-bottom);
+}
+html{height:100%}
+body{
+  background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;
+  min-height:100%;overflow-x:hidden;font-size:14px;
+  padding-top:var(--safe-top);
+}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 60% 40% at 15% 10%,rgba(196,125,255,.07),transparent),
+  radial-gradient(ellipse 50% 35% at 85% 85%,rgba(90,171,255,.06),transparent);
+  pointer-events:none;z-index:0}
+.app{max-width:430px;margin:0 auto;min-height:100vh;position:relative;z-index:1}
+
+/* ── HEADER ── */
+.hdr{padding:18px 18px 0;background:linear-gradient(to bottom,var(--bg) 80%,transparent);position:sticky;top:0;z-index:100}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-gem{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold) 0%,#8b5cf6 100%);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 0 18px rgba(200,168,75,.25)}
+.logo-text{font-size:20px;font-weight:700;letter-spacing:-.4px;line-height:1}
+.logo-sub{font-size:10px;color:var(--gold);letter-spacing:1.8px;text-transform:uppercase;font-weight:500;margin-top:1px}
+.cur-toggle{display:flex;background:var(--s2);border-radius:99px;padding:2px;gap:2px;border:1px solid var(--s4)}
+.cur-btn{padding:5px 13px;border-radius:99px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;background:transparent;color:var(--t2);transition:all .2s;letter-spacing:.3px}
+.cur-btn.active{background:var(--gold);color:#0a0b0e}
+.ctrl-row{display:flex;align-items:center;gap:7px;margin-bottom:11px;flex-wrap:wrap}
+.src-group{display:flex;background:var(--s2);border-radius:var(--rxs);padding:2px;gap:2px;border:1px solid var(--s4)}
+.src-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:5px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;background:transparent;color:var(--t2);transition:all .2s;letter-spacing:.2px}
+.src-btn.active{background:var(--s4);color:var(--text)}
+.src-btn.active .src-dot{box-shadow:0 0 6px currentColor}
+.src-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-poke{background:#a855f7}
+.dot-est{background:var(--t3)}
+.refresh-btn{margin-left:auto;display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:99px;border:1px solid rgba(200,168,75,.25);background:rgba(200,168,75,.08);color:var(--gold2);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.refresh-btn:active{transform:scale(.97)}
+.refresh-btn.loading{opacity:.55;pointer-events:none}
+.spin{display:inline-block;animation:spin .65s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rate-tag{font-size:9px;color:var(--t3);font-family:'DM Mono',monospace;white-space:nowrap;padding:3px 7px;background:var(--s2);border-radius:99px;border:1px solid var(--s3)}
+.nav{display:flex;gap:3px;padding:0 18px 13px}
+.nav-btn{flex:1;padding:7px 2px;border-radius:var(--rxs);border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:.4px;transition:all .18s;background:var(--s2);color:var(--t2)}
+.nav-btn.active{background:var(--s3);color:var(--text);box-shadow:inset 0 -2px 0 var(--gold)}
+
+/* ── PAGES ── */
+.page{display:none;padding:0 18px 110px;animation:fadeUp .22s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{background:var(--surface);border-radius:var(--r);padding:18px;margin-bottom:13px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,168,75,.09) 0%,transparent 55%,rgba(196,125,255,.06) 100%);pointer-events:none}
+.hero-label{font-size:10px;color:var(--t3);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:10px;font-weight:500}
+.hero-num{font-size:46px;font-weight:700;letter-spacing:-2.5px;line-height:1;margin-bottom:2px}
+.hero-num span{font-size:26px;color:var(--t2);font-weight:400;letter-spacing:-1px}
+.hero-pct{font-size:13px;color:var(--gold2);font-weight:600;margin-bottom:16px}
+.prog-track{height:5px;background:var(--s3);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold) 0%,var(--gold3) 100%);transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hg-card{background:var(--s2);border-radius:var(--rsm);padding:11px 13px;border:1px solid rgba(255,255,255,.03)}
+.hg-label{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;font-weight:600}
+.hg-label.ir{color:var(--ir)}
+.hg-label.sir{color:var(--sir)}
+.hg-num{font-size:21px;font-weight:700;letter-spacing:-.5px}
+.hg-sub{font-size:10px;color:var(--t2);margin-top:2px;font-family:'DM Mono',monospace}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border-radius:var(--r);padding:16px;margin-bottom:13px;border:1px solid rgba(255,255,255,.04)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.card-title{font-size:10px;color:var(--t3);letter-spacing:1.8px;text-transform:uppercase;font-weight:500}
+.badge{font-size:10px;padding:3px 9px;border-radius:99px;font-family:'DM Mono',monospace;font-weight:500;letter-spacing:.2px}
+.b-up{background:rgba(54,212,122,.13);color:var(--green)}
+.b-down{background:rgba(255,92,92,.13);color:var(--red)}
+.b-dim{background:var(--s2);color:var(--t3)}
+.tri-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.tri-item{background:var(--s2);border-radius:var(--rsm);padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.03)}
+.ti-label{font-size:9px;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:500}
+.ti-val{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-.3px}
+.c-gold{color:var(--gold2)}.c-green{color:var(--green)}.c-red{color:var(--red)}.c-dim{color:var(--t3)}
+.card-note{font-size:10px;color:var(--t3);text-align:center;padding:8px 0 2px;font-family:'DM Mono',monospace}
+.sec{font-size:10px;color:var(--t3);letter-spacing:1.8px;text-transform:uppercase;margin:16px 0 9px;font-weight:500}
+
+/* ── SET ROWS ── */
+.set-row{background:var(--surface);border-radius:var(--rsm);padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.03);cursor:default}
+.set-row:active{background:var(--s2)}
+.set-icon{width:34px;height:34px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.si-info{flex:1;min-width:0}
+.si-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.si-sub{font-size:10px;color:var(--t2);margin-top:2px;font-family:'DM Mono',monospace}
+.si-right{text-align:right;flex-shrink:0}
+.si-pct{font-size:13px;font-weight:700;font-family:'DM Mono',monospace}
+.si-bar{width:44px;height:3px;background:var(--s3);border-radius:99px;overflow:hidden;margin-top:5px;margin-left:auto}
+.si-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold3))}
+.si-fill.done{background:linear-gradient(90deg,var(--gold),var(--green))}
+
+/* ── NEED ── */
+.filter-row{display:flex;gap:5px;margin-bottom:12px}
+.f-btn{padding:5px 13px;border-radius:99px;border:1px solid var(--s3);background:transparent;color:var(--t2);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.f-btn.active{background:var(--s3);color:var(--text);border-color:rgba(200,168,75,.4)}
+.need-card{background:var(--surface);border-radius:var(--rsm);padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.03)}
+.n-badge{width:32px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;letter-spacing:.5px;flex-shrink:0}
+.n-badge.ir{background:rgba(90,171,255,.12);color:var(--ir)}
+.n-badge.sir{background:rgba(196,125,255,.12);color:var(--sir)}
+.n-info{flex:1;min-width:0}
+.n-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.n-set{font-size:10px;color:var(--t2);margin-top:1px}
+.n-price{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;text-align:right;flex-shrink:0;min-width:48px}
+.n-price.loaded{color:var(--gold2)}.n-price.dim{color:var(--t3)}
+
+/* ── VALUE ── */
+.val-hero{background:var(--surface);border-radius:var(--r);padding:20px 18px;margin-bottom:13px;text-align:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.val-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(200,168,75,.14),transparent 65%)}
+.val-big{font-size:42px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-1.5px;color:var(--gold2);position:relative;line-height:1.1}
+.val-sub{font-size:11px;color:var(--t2);margin-top:6px;position:relative}
+.val-ts{font-size:10px;color:var(--t3);margin-top:8px;position:relative;font-family:'DM Mono',monospace}
+.mb-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.mb-row:last-child{border-bottom:none}
+.mb-set{font-size:12px;font-weight:500}
+.mb-val{font-size:12px;font-family:'DM Mono',monospace;color:var(--gold2);font-weight:600}
+.mb-dl{font-size:10px;font-family:'DM Mono',monospace;margin-top:1px;text-align:right}
+
+/* ── SEARCH ── */
+.srch{position:relative;margin-bottom:12px}
+.srch-inp{width:100%;background:var(--surface);border:1px solid var(--s3);border-radius:var(--rsm);padding:9px 12px 9px 36px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;outline:none;transition:border .2s}
+.srch-inp::placeholder{color:var(--t3)}
+.srch-inp:focus{border-color:rgba(200,168,75,.35)}
+.srch-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:14px;pointer-events:none}
+.empty{text-align:center;padding:30px;color:var(--t3);font-size:12px}
+.holo{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(90deg,rgba(200,168,75,.1),rgba(196,125,255,.1));border:1px solid rgba(200,168,75,.18);border-radius:99px;padding:3px 10px;font-size:10px;color:var(--gold3);font-weight:600;letter-spacing:.3px;margin-bottom:5px}
+
+/* ── STATUS ── */
+.status-bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--s2);border-radius:var(--rxs);border:1px solid var(--s3);margin-bottom:10px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.status-dot.live{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+.status-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-text{font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── BOTTOM NAV ── */
+.bnav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:rgba(8,11,18,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,.06);
+  padding:10px 20px calc(20px + var(--safe-bot));
+  display:flex;justify-content:space-around;z-index:200
+}
+.bn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--t3);transition:color .18s;padding:3px 14px}
+.bn.active{color:var(--gold)}
+.bn-ic{font-size:19px;line-height:1}
+.bn-lb{font-size:9px;letter-spacing:.6px;font-weight:600;text-transform:uppercase}
+
+/* ── INSTALL BANNER ── */
+.install-banner{display:none;position:fixed;bottom:calc(76px + var(--safe-bot));left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:400px;background:var(--s2);border:1px solid rgba(200,168,75,.25);border-radius:var(--r);padding:12px 14px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.install-banner.show{display:flex;align-items:flex-start;gap:10px}
+.install-gem{font-size:22px;flex-shrink:0;margin-top:1px}
+.install-text{flex:1}
+.install-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.install-sub{font-size:11px;color:var(--t2);line-height:1.5}
+.install-close{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="logo">
+      <div class="logo-gem">✦</div>
+      <div>
+        <div class="logo-text">Card Master</div>
+        <div class="logo-sub">SV Era · IR &amp; SIR</div>
+      </div>
+    </div>
+    <div class="cur-toggle">
+      <button class="cur-btn active" id="btnCAD" onclick="setCur('CAD')">CAD</button>
+      <button class="cur-btn" id="btnUSD" onclick="setCur('USD')">USD</button>
+    </div>
+  </div>
+  <div class="ctrl-row">
+    <div class="src-group">
+      <button class="src-btn" id="srcPoke" onclick="setSrc('poke')">
+        <span class="src-dot dot-poke"></span>PokeData
+      </button>
+      <button class="src-btn active" id="srcEst" onclick="setSrc('est')">
+        <span class="src-dot dot-est"></span>Estimates
+      </button>
+    </div>
+    <div class="rate-tag" id="rateTag">1 USD = 1.38 CAD</div>
+    <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
+      <span id="refreshIc">↻</span> <span id="refreshLbl">Refresh</span>
+    </button>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="goPage('overview',0)">Overview</button>
+    <button class="nav-btn" onclick="goPage('sets',1)">Sets</button>
+    <button class="nav-btn" onclick="goPage('need',2)">Need</button>
+    <button class="nav-btn" onclick="goPage('value',3)">Value</button>
+  </div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="page active" id="pg-overview">
+  <div class="hero">
+    <div class="hero-label">Total Progress — Scarlet &amp; Violet Era</div>
+    <div class="hero-num">484<span>/559</span></div>
+    <div class="hero-pct">86.58% complete · 75 cards remaining</div>
+    <div class="prog-track"><div class="prog-fill" id="heroBar" style="width:0%"></div></div>
+    <div class="hero-grid">
+      <div class="hg-card">
+        <div class="hg-label ir">Illustration Rare</div>
+        <div class="hg-num">355<span style="font-size:14px;color:var(--t2);font-weight:400">/392</span></div>
+        <div class="hg-sub">90.56% collected</div>
+      </div>
+      <div class="hg-card">
+        <div class="hg-label sir">Special IR</div>
+        <div class="hg-num">129<span style="font-size:14px;color:var(--t2);font-weight:400">/167</span></div>
+        <div class="hg-sub">77.25% collected</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">Collection Value</div>
+      <div class="badge b-dim" id="ovBadge">tap ↻ refresh</div>
+    </div>
+    <div class="tri-grid">
+      <div class="tri-item"><div class="ti-label">Spent</div><div class="ti-val" id="ovSpent">—</div></div>
+      <div class="tri-item"><div class="ti-label">Market</div><div class="ti-val c-gold" id="ovMarket">—</div></div>
+      <div class="tri-item"><div class="ti-label">P/L</div><div class="ti-val c-dim" id="ovPL">—</div></div>
+    </div>
+    <div class="card-note" id="ovNote">Select a source and tap ↻ Refresh</div>
+  </div>
+  <div id="statusBar" style="display:none" class="status-bar">
+    <div class="status-dot" id="sDot"></div>
+    <div class="status-text" id="sTxt"></div>
+  </div>
+  <div class="sec">Complete Sets</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+    <span class="holo">🔥 Obsidian Flames</span>
+    <span class="holo">🟡 151</span>
+    <span class="holo">🤝 Journey Together</span>
+  </div>
+  <div class="sec">Closest to Complete</div>
+  <div id="topSets"></div>
+</div>
+
+<!-- SETS -->
+<div class="page" id="pg-sets">
+  <div class="srch"><span class="srch-ic">⌕</span>
+    <input class="srch-inp" placeholder="Search sets…" id="setQ" oninput="renderSets()">
+  </div>
+  <div id="setsList"></div>
+</div>
+
+<!-- NEED -->
+<div class="page" id="pg-need">
+  <div class="srch"><span class="srch-ic">⌕</span>
+    <input class="srch-inp" placeholder="Search cards…" id="needQ" oninput="renderNeed()">
+  </div>
+  <div class="filter-row">
+    <button class="f-btn active" onclick="setFilter(this,'all')">All (75)</button>
+    <button class="f-btn" onclick="setFilter(this,'IR')">IR</button>
+    <button class="f-btn" onclick="setFilter(this,'SIR')">SIR</button>
+  </div>
+  <div id="needList"></div>
+</div>
+
+<!-- VALUE -->
+<div class="page" id="pg-value">
+  <div class="val-hero">
+    <div style="font-size:10px;color:var(--t3);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:9px;position:relative;font-weight:500">Estimated Collection Value</div>
+    <div class="val-big" id="valBig">—</div>
+    <div class="val-sub" id="valSub">Tap ↻ Refresh to load live prices</div>
+    <div class="val-ts" id="valTs"></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">P&amp;L Summary</div></div>
+    <div class="tri-grid">
+      <div class="tri-item"><div class="ti-label">Spent</div><div class="ti-val" id="plSpent">—</div></div>
+      <div class="tri-item"><div class="ti-label">Market</div><div class="ti-val c-gold" id="plMkt">—</div></div>
+      <div class="tri-item"><div class="ti-label">P/L</div><div class="ti-val c-dim" id="plDl">—</div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <div class="card-hdr"><div class="card-title">By Set</div></div>
+    <div id="mbRows"><div class="empty" style="padding:16px">Tap ↻ Refresh to load</div></div>
+  </div>
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="bn active" id="bn0" onclick="goPage('overview',0)"><div class="bn-ic">◈</div><div class="bn-lb">Overview</div></button>
+  <button class="bn" id="bn1" onclick="goPage('sets',1)"><div class="bn-ic">▦</div><div class="bn-lb">Sets</div></button>
+  <button class="bn" id="bn2" onclick="goPage('need',2)"><div class="bn-ic">☐</div><div class="bn-lb">Need</div></button>
+  <button class="bn" id="bn3" onclick="goPage('value',3)"><div class="bn-ic">◉</div><div class="bn-lb">Value</div></button>
+</div>
+
+<!-- INSTALL BANNER (shows in Safari on iOS) -->
+<div class="install-banner" id="installBanner">
+  <div class="install-gem">✦</div>
+  <div class="install-text">
+    <div class="install-title">Add Card Master to your Home Screen</div>
+    <div class="install-sub">Tap the Share button below, then "Add to Home Screen" for the full app experience.</div>
+  </div>
+  <button class="install-close" onclick="document.getElementById('installBanner').classList.remove('show')">×</button>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────
+const SETS = [
+  {name:"SV Base",            emoji:"🔴",ir:24,irC:20,sir:10,sirC:7,  spentCAD:368,  pokeId:510},
+  {name:"Paldea Evolved",     emoji:"🌿",ir:36,irC:33,sir:15,sirC:6,  spentCAD:1296, pokeId:513},
+  {name:"Obsidian Flames",    emoji:"🔥",ir:12,irC:12,sir:6, sirC:6,  spentCAD:292,  pokeId:517},
+  {name:"151",                emoji:"🟡",ir:16,irC:16,sir:7, sirC:7,  spentCAD:1369, pokeId:532},
+  {name:"Paradox Rift",       emoji:"⚡",ir:34,irC:30,sir:15,sirC:8,  spentCAD:657,  pokeId:536},
+  {name:"Paldean Fates",      emoji:"✨",ir:3, irC:3, sir:8, sirC:7,  spentCAD:1073, pokeId:539},
+  {name:"Temporal Forces",    emoji:"🌀",ir:22,irC:20,sir:10,sirC:7,  spentCAD:607,  pokeId:542},
+  {name:"Twilight Masquerade",emoji:"🎭",ir:21,irC:17,sir:11,sirC:6,  spentCAD:795,  pokeId:545},
+  {name:"Shrouded Fable",     emoji:"🌑",ir:15,irC:9, sir:5, sirC:4,  spentCAD:383,  pokeId:548},
+  {name:"Stellar Crown",      emoji:"⭐",ir:13,irC:12,sir:6, sirC:4,  spentCAD:238,  pokeId:549},
+  {name:"Surging Sparks",     emoji:"⚡",ir:23,irC:21,sir:11,sirC:9,  spentCAD:822,  pokeId:555},
+  {name:"Prismatic Evolutions",emoji:"💎",ir:0, irC:0, sir:32,sirC:28,spentCAD:4282, pokeId:557},
+  {name:"Journey Together",   emoji:"🤝",ir:11,irC:11,sir:6, sirC:6,  spentCAD:558,  pokeId:562},
+  {name:"Destined Rivals",    emoji:"🏆",ir:23,irC:23,sir:11,sirC:10, spentCAD:1796, pokeId:567},
+  {name:"Black Bolt",         emoji:"⚫",ir:69,irC:65,sir:7, sirC:7,  spentCAD:1762, pokeId:570},
+  {name:"White Flare",        emoji:"⚪",ir:70,irC:63,sir:7, sirC:7,  spentCAD:1629, pokeId:571},
+];
+const TOTAL_SPENT_CAD = 17927;
+
+const NEED = [
+  {name:"Pachirisu",num:208,type:"IR",set:"SV Base"},{name:"Pawmot",num:209,type:"IR",set:"SV Base"},
+  {name:"Fidough",num:213,type:"IR",set:"SV Base"},{name:"Greavard",num:214,type:"IR",set:"SV Base"},
+  {name:"Miraidon ex",num:244,type:"SIR",set:"SV Base"},{name:"Gardevoir ex",num:245,type:"SIR",set:"SV Base"},{name:"Miriam",num:251,type:"SIR",set:"SV Base"},
+  {name:"Fuecoco",num:201,type:"IR",set:"Paldea Evolved"},{name:"Arctibax",num:209,type:"IR",set:"Paldea Evolved"},
+  {name:"Paldean Wooper",num:221,type:"IR",set:"Paldea Evolved"},{name:"Skaledge",num:258,type:"IR",set:"Paldea Evolved"},
+  {name:"Chien-Pao ex",num:261,type:"SIR",set:"Paldea Evolved"},{name:"Ting-Lu ex",num:263,type:"SIR",set:"Paldea Evolved"},
+  {name:"Boss's Orders",num:265,type:"SIR",set:"Paldea Evolved"},{name:"Dandra",num:266,type:"SIR",set:"Paldea Evolved"},
+  {name:"Giacomo",num:267,type:"SIR",set:"Paldea Evolved"},{name:"Grusha",num:268,type:"SIR",set:"Paldea Evolved"},
+  {name:"Iono",num:269,type:"SIR",set:"Paldea Evolved"},{name:"Saguaro",num:270,type:"SIR",set:"Paldea Evolved"},
+  {name:"Dottler",num:184,type:"IR",set:"Paradox Rift"},{name:"Snorunt",num:188,type:"IR",set:"Paradox Rift"},
+  {name:"Swablu",num:213,type:"IR",set:"Paradox Rift"},{name:"Cyclizar",num:215,type:"IR",set:"Paradox Rift"},
+  {name:"Gardevoir ex",num:245,type:"SIR",set:"Paradox Rift"},{name:"Golisopod ex",num:246,type:"SIR",set:"Paradox Rift"},
+  {name:"Iron Valiant ex",num:249,type:"SIR",set:"Paradox Rift"},{name:"Choldango ex",num:252,type:"SIR",set:"Paradox Rift"},
+  {name:"Altaria ex",num:253,type:"SIR",set:"Paradox Rift"},{name:"Parasol Lady",num:255,type:"SIR",set:"Paradox Rift"},{name:"Tulip",num:259,type:"SIR",set:"Paradox Rift"},
+  {name:"Clive",num:236,type:"SIR",set:"Paldean Fates"},
+  {name:"Grotle",num:164,type:"IR",set:"Temporal Forces"},{name:"Chatot",num:181,type:"IR",set:"Temporal Forces"},
+  {name:"Iron Crown ex",num:206,type:"SIR",set:"Temporal Forces"},{name:"Bianca's Devotion",num:209,type:"SIR",set:"Temporal Forces"},{name:"Eri",num:210,type:"SIR",set:"Temporal Forces"},
+  {name:"Cramorant",num:176,type:"IR",set:"Twilight Masquerade"},{name:"Enamorus",num:180,type:"IR",set:"Twilight Masquerade"},
+  {name:"Applin",num:185,type:"IR",set:"Twilight Masquerade"},{name:"Chansey",num:187,type:"IR",set:"Twilight Masquerade"},
+  {name:"Wellspring Mask Ogerpon ex",num:213,type:"SIR",set:"Twilight Masquerade"},
+  {name:"Cornerstone Mask Ogerpon ex",num:215,type:"SIR",set:"Twilight Masquerade"},
+  {name:"Bloodmoon Ursaluna ex",num:216,type:"SIR",set:"Twilight Masquerade"},
+  {name:"Lana's Aid",num:219,type:"SIR",set:"Twilight Masquerade"},{name:"Perrin",num:220,type:"SIR",set:"Twilight Masquerade"},
+  {name:"Tapu Bulu",num:65,type:"IR",set:"Shrouded Fable"},{name:"Dusclops",num:89,type:"IR",set:"Shrouded Fable"},
+  {name:"Fezandipiti",num:73,type:"IR",set:"Shrouded Fable"},{name:"Zoroark",num:75,type:"IR",set:"Shrouded Fable"},
+  {name:"Munkidori",num:70,type:"IR",set:"Shrouded Fable"},{name:"Okidogi",num:67,type:"IR",set:"Shrouded Fable"},
+  {name:"Raikou",num:180,type:"IR",set:"Surging Sparks"},{name:"Regice",num:189,type:"IR",set:"Surging Sparks"},
+  {name:"Weavile ex",num:229,type:"SIR",set:"Surging Sparks"},{name:"Giratina ex",num:233,type:"SIR",set:"Surging Sparks"},
+  {name:"Stellar Crown SIR 1",num:160,type:"SIR",set:"Stellar Crown"},{name:"Stellar Crown SIR 2",num:161,type:"SIR",set:"Stellar Crown"},
+  {name:"Okidogi ex",num:162,type:"SIR",set:"Stellar Crown"},{name:"Munkidori ex",num:163,type:"SIR",set:"Stellar Crown"},
+  {name:"Prismatic SIR 1",num:234,type:"SIR",set:"Prismatic Evolutions"},{name:"Prismatic SIR 2",num:235,type:"SIR",set:"Prismatic Evolutions"},
+  {name:"Prismatic SIR 3",num:236,type:"SIR",set:"Prismatic Evolutions"},{name:"Prismatic SIR 4",num:237,type:"SIR",set:"Prismatic Evolutions"},
+  {name:"Destined Rivals SIR",num:182,type:"SIR",set:"Destined Rivals"},
+  {name:"White Flare IR 1",num:182,type:"IR",set:"White Flare"},{name:"White Flare IR 2",num:185,type:"IR",set:"White Flare"},
+  {name:"White Flare IR 3",num:191,type:"IR",set:"White Flare"},{name:"White Flare IR 4",num:198,type:"IR",set:"White Flare"},
+  {name:"White Flare IR 5",num:201,type:"IR",set:"White Flare"},{name:"White Flare IR 6",num:207,type:"IR",set:"White Flare"},{name:"White Flare IR 7",num:215,type:"IR",set:"White Flare"},
+  {name:"Black Bolt IR 1",num:201,type:"IR",set:"Black Bolt"},{name:"Black Bolt IR 2",num:208,type:"IR",set:"Black Bolt"},
+  {name:"Black Bolt IR 3",num:212,type:"IR",set:"Black Bolt"},{name:"Black Bolt IR 4",num:218,type:"IR",set:"Black Bolt"},
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let cur='CAD', src='est', usdCad=1.38, mktCAD=null, needPricesUSD={}, fetched=false, filt='all';
+
+// ── CURRENCY ──────────────────────────────────────────────────
+function conv(cad){ return cur==='CAD'?cad:cad/usdCad; }
+function sym(){ return cur==='CAD'?'CA$':'$'; }
+function fmt(cad){ return sym()+Math.round(conv(cad)).toLocaleString(); }
+function fmtDec(usd){ const v=cur==='CAD'?usd*usdCad:usd; return sym()+v.toFixed(2); }
+function setCur(c){
+  cur=c;
+  document.getElementById('btnCAD').classList.toggle('active',c==='CAD');
+  document.getElementById('btnUSD').classList.toggle('active',c==='USD');
+  refreshDisplays();
+}
+
+// ── SOURCE ────────────────────────────────────────────────────
+function setSrc(s){
+  src=s;
+  document.getElementById('srcPoke').classList.toggle('active',s==='poke');
+  document.getElementById('srcEst').classList.toggle('active',s==='est');
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function goPage(id,idx){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  document.getElementById('bn'+idx).classList.add('active');
+}
+function setFilter(btn,f){
+  filt=f;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNeed();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function getPct(s){ const t=s.ir+s.sir,c=s.irC+s.sirC; return t>0?Math.round(c/t*1000)/10:100; }
+function totalMarketCAD(){ return mktCAD?Object.values(mktCAD).reduce((a,b)=>a+b,0):0; }
+function estimateSet(s){ return Math.round((s.irC+s.sirC)*(s.sir>s.ir?14:9)*usdCad); }
+function setStatus(state,txt){
+  const bar=document.getElementById('statusBar'),dot=document.getElementById('sDot'),stxt=document.getElementById('sTxt');
+  if(!txt){bar.style.display='none';return;}
+  bar.style.display='flex';dot.className='status-dot'+(state?' '+state:'');stxt.textContent=txt;
+}
+
+// ── EXCHANGE RATE ─────────────────────────────────────────────
+async function fetchRate(){
+  try{ const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD'); if(r.ok){const d=await r.json();usdCad=d.rates.CAD||1.38;} }catch(e){usdCad=1.38;}
+  document.getElementById('rateTag').textContent='1 USD = '+usdCad.toFixed(3)+' CAD';
+}
+
+// ── POKEDATA ──────────────────────────────────────────────────
+async function fetchPokeData(){
+  setStatus('loading','Connecting to PokeData.io…');
+  mktCAD={};needPricesUSD={};
+  for(let i=0;i<SETS.length;i++){
+    const set=SETS[i];
+    setStatus('loading',`Fetching ${set.name} (${i+1}/${SETS.length})…`);
+    try{
+      const r=await fetch(`https://www.pokedata.io/api/cards?set_id=${set.pokeId}&language=ENGLISH&limit=400`);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const cards=await r.json();
+      const secrets=cards.filter(c=>c.secret===true&&!c.name.toLowerCase().includes('reverse')&&!c.name.toLowerCase().includes('energy')&&parseInt(c.num)>=150);
+      const priced=[];
+      for(const card of secrets){
+        try{
+          const sr=await fetch(`https://www.pokedata.io/api/cards/stats?id=${card.id}`);
+          if(!sr.ok) continue;
+          const stats=await sr.json();
+          const s0=stats.find(s=>s.source===0),s10=stats.find(s=>s.source===10),s11=stats.find(s=>s.source===11);
+          const price=s0&&s0.avg>0.5?s0.avg:s10&&s10.avg>0.5?s10.avg:s11&&s11.avg>0.5?s11.avg:0;
+          if(price>0) priced.push({name:card.name,num:card.num,priceUSD:price});
+        }catch(e){}
+        await new Promise(r=>setTimeout(r,40));
+      }
+      for(const need of NEED.filter(n=>n.set===set.name)){
+        const match=priced.find(p=>parseInt(p.num)===need.num)||priced.find(p=>p.name.toLowerCase().includes(need.name.toLowerCase().split(' ')[0]));
+        if(match) needPricesUSD[need.name]=match.priceUSD;
+      }
+      const col=set.irC+set.sirC;
+      const avg=priced.length>0?priced.reduce((a,b)=>a+b.priceUSD,0)/priced.length:9;
+      mktCAD[set.name]=Math.round(avg*col*usdCad);
+    }catch(e){ mktCAD[set.name]=estimateSet(set); }
+  }
+  setStatus('live',`PokeData.io · ${Object.keys(mktCAD).length} sets · ${new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})}`);
+}
+
+// ── ESTIMATES ─────────────────────────────────────────────────
+const BASE_EST={"SV Base":420,"Paldea Evolved":1310,"Obsidian Flames":310,"151":1520,"Paradox Rift":720,"Paldean Fates":1050,"Temporal Forces":630,"Twilight Masquerade":820,"Shrouded Fable":360,"Stellar Crown":250,"Surging Sparks":890,"Prismatic Evolutions":4800,"Journey Together":580,"Destined Rivals":1910,"Black Bolt":1820,"White Flare":1740};
+async function fetchEstimates(){
+  await new Promise(r=>setTimeout(r,700));
+  mktCAD={};
+  SETS.forEach(s=>{mktCAD[s.name]=Math.round((BASE_EST[s.name]||estimateSet(s))*(0.94+Math.random()*.12));});
+  needPricesUSD={};
+  NEED.forEach(c=>{needPricesUSD[c.name]=c.type==='SIR'?8+Math.random()*55:3+Math.random()*22;});
+  setStatus('live','Estimates · '+new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'}));
+}
+
+// ── REFRESH ───────────────────────────────────────────────────
+async function doRefresh(){
+  const btn=document.getElementById('refreshBtn'),ic=document.getElementById('refreshIc'),lbl=document.getElementById('refreshLbl');
+  btn.classList.add('loading');ic.innerHTML='<span class="spin">↻</span>';lbl.textContent='Loading…';
+  await fetchRate();
+  if(src==='poke') await fetchPokeData(); else await fetchEstimates();
+  fetched=true;refreshDisplays();
+  btn.classList.remove('loading');ic.innerHTML='↻';lbl.textContent='Refresh';
+  const ts=new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('valTs').textContent=(src==='poke'?'PokeData.io':'Estimates')+' · '+cur+' · 1 USD = '+usdCad.toFixed(3)+' CAD · '+ts;
+}
+
+// ── DISPLAYS ──────────────────────────────────────────────────
+function refreshDisplays(){ updateOverview();renderSets();renderNeed();updateValue(); }
+
+function updateOverview(){
+  document.getElementById('ovSpent').textContent=fmt(TOTAL_SPENT_CAD);
+  if(!fetched||!mktCAD){
+    document.getElementById('ovMarket').textContent='—';document.getElementById('ovPL').textContent='—';
+    document.getElementById('ovBadge').className='badge b-dim';document.getElementById('ovBadge').textContent='tap ↻ refresh';
+    document.getElementById('ovNote').textContent='Select a source and tap ↻ Refresh';
+    document.getElementById('topSets').innerHTML='';return;
+  }
+  const mkt=totalMarketCAD(),pl=mkt-TOTAL_SPENT_CAD;
+  document.getElementById('ovMarket').textContent=fmt(mkt);
+  const plEl=document.getElementById('ovPL');plEl.textContent=(pl>=0?'+':'')+fmt(pl);plEl.className='ti-val '+(pl>=0?'c-green':'c-red');
+  const badge=document.getElementById('ovBadge');badge.className='badge '+(pl>=0?'b-up':'b-down');badge.textContent=(pl>=0?'▲ ':'-')+fmt(Math.abs(pl));
+  document.getElementById('ovNote').textContent=(src==='poke'?'PokeData.io':'Estimates')+' · '+cur+' · live';
+  const top=[...SETS].filter(s=>getPct(s)<100).sort((a,b)=>getPct(b)-getPct(a)).slice(0,4);
+  document.getElementById('topSets').innerHTML=top.map(s=>{
+    const pct=getPct(s),col=s.irC+s.sirC,total=s.ir+s.sir,mv=mktCAD&&mktCAD[s.name]?fmt(mktCAD[s.name]):'—';
+    return `<div class="set-row"><div class="set-icon">${s.emoji}</div><div class="si-info"><div class="si-name">${s.name}</div><div class="si-sub">${col}/${total} · ${mv}</div></div><div class="si-right"><div class="si-pct" style="color:${pct>90?'var(--green)':pct>75?'var(--amber)':'var(--text)'}">${pct}%</div><div class="si-bar"><div class="si-fill" style="width:${pct}%"></div></div></div></div>`;
+  }).join('');
+}
+
+function renderSets(){
+  const q=(document.getElementById('setQ')||{value:''}).value.toLowerCase();
+  document.getElementById('setsList').innerHTML=SETS.filter(s=>s.name.toLowerCase().includes(q)).map(s=>{
+    const pct=getPct(s),col=s.irC+s.sirC,total=s.ir+s.sir,done=pct===100;
+    const mv=mktCAD&&mktCAD[s.name]?fmt(mktCAD[s.name]):'—';
+    return `<div class="set-row"><div class="set-icon">${s.emoji}</div><div class="si-info"><div class="si-name">${s.name}</div><div class="si-sub">IR ${s.irC}/${s.ir} · SIR ${s.sirC}/${s.sir} · spent ${fmt(s.spentCAD)}${mktCAD?' · mkt '+mv:''}</div></div><div class="si-right"><div class="si-pct" style="color:${done?'var(--gold)':pct>90?'var(--green)':pct>75?'var(--amber)':'var(--text)'}">${pct}%</div><div class="si-bar"><div class="si-fill ${done?'done':''}" style="width:${pct}%"></div></div></div></div>`;
+  }).join('')||'<div class="empty">No sets found</div>';
+}
+
+function renderNeed(){
+  const q=(document.getElementById('needQ')||{value:''}).value.toLowerCase();
+  const list=NEED.filter(c=>(c.name.toLowerCase().includes(q)||c.set.toLowerCase().includes(q))&&(filt==='all'||c.type===filt));
+  document.getElementById('needList').innerHTML=list.map(c=>{
+    const raw=needPricesUSD[c.name],hasPrice=!!raw;
+    return `<div class="need-card"><div class="n-badge ${c.type.toLowerCase()}">${c.type}</div><div class="n-info"><div class="n-name">${c.name}</div><div class="n-set">${c.set} · #${c.num}</div></div><div class="n-price ${hasPrice?'loaded':'dim'}">${hasPrice?fmtDec(raw):'—'}</div></div>`;
+  }).join('')||'<div class="empty">No cards found</div>';
+}
+
+function updateValue(){
+  if(!fetched||!mktCAD){
+    document.getElementById('valBig').textContent='—';document.getElementById('valSub').textContent='Tap ↻ Refresh to load prices';
+    ['plSpent','plMkt','plDl'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('mbRows').innerHTML='<div class="empty" style="padding:16px">Tap ↻ Refresh to load</div>';return;
+  }
+  const mkt=totalMarketCAD(),pl=mkt-TOTAL_SPENT_CAD;
+  document.getElementById('valBig').textContent=fmt(mkt);
+  document.getElementById('valSub').textContent=(src==='poke'?'PokeData.io live prices':'Estimated values')+' · '+cur;
+  document.getElementById('plSpent').textContent=fmt(TOTAL_SPENT_CAD);document.getElementById('plMkt').textContent=fmt(mkt);
+  const dlEl=document.getElementById('plDl');dlEl.textContent=(pl>=0?'+':'')+fmt(pl);dlEl.className='ti-val '+(pl>=0?'c-green':'c-red');
+  document.getElementById('mbRows').innerHTML=SETS.map(s=>{
+    const mv=mktCAD[s.name]||0,d=mv-s.spentCAD;
+    return `<div class="mb-row"><div><div class="mb-set">${s.emoji} ${s.name}</div></div><div style="text-align:right"><div class="mb-val">${fmt(mv)}</div><div class="mb-dl ${d>=0?'c-green':'c-red'}">${d>=0?'+':''}${fmt(d)}</div></div></div>`;
+  }).join('');
+}
+
+// ── iOS PWA INSTALL PROMPT ────────────────────────────────────
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isInStandalone = window.navigator.standalone === true;
+if(isIOS && !isInStandalone){
+  // Show install banner after 2s if not already installed
+  setTimeout(()=>{
+    const dismissed = localStorage.getItem('installDismissed');
+    if(!dismissed) document.getElementById('installBanner').classList.add('show');
+  }, 2000);
+}
+document.getElementById('installBanner').querySelector('.install-close').addEventListener('click',()=>{
+  localStorage.setItem('installDismissed','1');
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+setTimeout(()=>{ document.getElementById('heroBar').style.width='86.58%'; },150);
+renderSets();renderNeed();updateOverview();updateValue();
+</script>
+</body>
+</html>
