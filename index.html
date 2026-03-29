@@ -350,7 +350,7 @@ const SETS = [
   {name:"Prismatic Evolutions",emoji:"💎",tcgId:"sv8pt5",   spentCAD:4282},
   {name:"Journey Together",    emoji:"🤝",tcgId:"sv9",      spentCAD:558},
   {name:"Destined Rivals",     emoji:"🏆",tcgId:"sv10",     spentCAD:1796},
-  {name:"Black Bolt",          emoji:"⚫",tcgId:"sv9a",     spentCAD:1762},
+  {name:"Black Bolt",          emoji:"⚫",tcgId:"zsv10pt5",     spentCAD:1762},
   {name:"White Flare",         emoji:"⚪",tcgId:"rsv10pt5", spentCAD:1629},
 ];
 const TOTAL_SPENT_CAD = 17927;
@@ -389,7 +389,7 @@ async function loadSet(set) {
   cacheLoading[set.name] = true;
 
   // Try localStorage cache first (valid for 24h)
-  const lk = `cm_v6_${set.tcgId}`;
+  const lk = `cm_v7_${set.tcgId}`;
   try {
     const cached = JSON.parse(localStorage.getItem(lk));
     if (cached && Date.now() - cached.ts < 86400000) {
@@ -670,7 +670,7 @@ async function fetchLivePrices() {
         price: c.tcgplayer?.prices?.holofoil?.market || c.tcgplayer?.prices?.normal?.market || null
       }));
       cardCache[set.name] = cached;
-      try { localStorage.setItem(`cm_v6_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
+      try { localStorage.setItem(`cm_v7_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
 
       // Extract prices
       const prices = [];
