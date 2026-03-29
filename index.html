@@ -355,27 +355,40 @@ const SETS = [
 ];
 const TOTAL_SPENT_CAD = 17927;
 
-// Cards originally needing collection (from spreadsheet)
-// Format: "SetName_cardNumber"
+// Cards originally needing collection — verified against Pokemon TCG API card numbers
+// (API numbering differs from physical card numbers for newer English sets)
 const ORIG_NEEDED = new Set([
+  // SV Base
   "SV Base_208","SV Base_209","SV Base_213","SV Base_214","SV Base_244","SV Base_245","SV Base_251",
+  // Paldea Evolved
   "Paldea Evolved_201","Paldea Evolved_209","Paldea Evolved_221","Paldea Evolved_258",
   "Paldea Evolved_261","Paldea Evolved_263","Paldea Evolved_265","Paldea Evolved_266",
   "Paldea Evolved_267","Paldea Evolved_268","Paldea Evolved_269","Paldea Evolved_270",
+  // Paradox Rift
   "Paradox Rift_184","Paradox Rift_188","Paradox Rift_213","Paradox Rift_215",
   "Paradox Rift_245","Paradox Rift_246","Paradox Rift_249","Paradox Rift_252",
   "Paradox Rift_253","Paradox Rift_255","Paradox Rift_259",
+  // Paldean Fates
   "Paldean Fates_236",
+  // Temporal Forces
   "Temporal Forces_164","Temporal Forces_181","Temporal Forces_206","Temporal Forces_209","Temporal Forces_210",
+  // Twilight Masquerade
   "Twilight Masquerade_176","Twilight Masquerade_180","Twilight Masquerade_185","Twilight Masquerade_187",
   "Twilight Masquerade_213","Twilight Masquerade_215","Twilight Masquerade_216","Twilight Masquerade_219","Twilight Masquerade_220",
-  "Shrouded Fable_65","Shrouded Fable_89","Shrouded Fable_73","Shrouded Fable_75","Shrouded Fable_70","Shrouded Fable_67",
-  "Stellar Crown_160","Stellar Crown_161","Stellar Crown_162","Stellar Crown_163",
-  "Surging Sparks_180","Surging Sparks_189","Surging Sparks_229","Surging Sparks_233",
-  "Prismatic Evolutions_234","Prismatic Evolutions_235","Prismatic Evolutions_236","Prismatic Evolutions_237",
-  "Destined Rivals_182",
-  "White Flare_182","White Flare_185","White Flare_191","White Flare_198","White Flare_201","White Flare_207","White Flare_215",
-  "Black Bolt_201","Black Bolt_208","Black Bolt_212","Black Bolt_218",
+  // Shrouded Fable (Tapu Bulu=65, Dusclops=69, Fezandipiti=73, Zorua=75, Cufant=76, Bewear=79, Fezandipiti ex=92)
+  "Shrouded Fable_65","Shrouded Fable_69","Shrouded Fable_73","Shrouded Fable_75","Shrouded Fable_76","Shrouded Fable_79","Shrouded Fable_92",
+  // Stellar Crown (Milcery=152, Hydrapple ex=167, Dachsbun ex=169)
+  "Stellar Crown_152","Stellar Crown_167","Stellar Crown_169",
+  // Surging Sparks (Castform Sunny Form=195, Spheal=199, Milotic ex=237, Clemont's Quick Wit=243)
+  "Surging Sparks_195","Surging Sparks_199","Surging Sparks_237","Surging Sparks_243",
+  // Prismatic Evolutions (Palafin ex=151, Sandy Shocks ex=159, Pecharunt ex=163, Gholdengo ex=164)
+  "Prismatic Evolutions_151","Prismatic Evolutions_159","Prismatic Evolutions_163","Prismatic Evolutions_164",
+  // Destined Rivals (Ethan's Adventure=236)
+  "Destined Rivals_236",
+  // White Flare (Accelgor=94, Tepig=96, Basculin=108, Gothita=124, Garbodor=141, Zorua=142, Ferrothorn=149)
+  "White Flare_94","White Flare_96","White Flare_108","White Flare_124","White Flare_141","White Flare_142","White Flare_149",
+  // Black Bolt (Golurk=123, Timburr=125, Krookodile=137, Minccino=152)
+  "Black Bolt_123","Black Bolt_125","Black Bolt_137","Black Bolt_152",
 ]);
 
 // ─── CARD CACHE ───────────────────────────────────────────────
@@ -389,7 +402,7 @@ async function loadSet(set) {
   cacheLoading[set.name] = true;
 
   // Try localStorage cache first (valid for 24h)
-  const lk = `cm_v7_${set.tcgId}`;
+  const lk = `cm_v8_${set.tcgId}`;
   try {
     const cached = JSON.parse(localStorage.getItem(lk));
     if (cached && Date.now() - cached.ts < 86400000) {
@@ -670,7 +683,7 @@ async function fetchLivePrices() {
         price: c.tcgplayer?.prices?.holofoil?.market || c.tcgplayer?.prices?.normal?.market || null
       }));
       cardCache[set.name] = cached;
-      try { localStorage.setItem(`cm_v7_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
+      try { localStorage.setItem(`cm_v8_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
 
       // Extract prices
       const prices = [];
