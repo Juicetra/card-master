@@ -402,7 +402,7 @@ async function loadSet(set) {
   cacheLoading[set.name] = true;
 
   // Try localStorage cache first (valid for 24h)
-  const lk = `cm_v8_${set.tcgId}`;
+  const lk = `cm_v9_${set.tcgId}`;
   try {
     const cached = JSON.parse(localStorage.getItem(lk));
     if (cached && Date.now() - cached.ts < 86400000) {
@@ -415,7 +415,7 @@ async function loadSet(set) {
   try {
     const q = `set.id:${set.tcgId} (rarity:"Illustration Rare" OR rarity:"Special Illustration Rare")`;
     const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&select=name,number,rarity,images,tcgplayer&pageSize=250&orderBy=number`;
-    const r = await fetch(url);
+    const r = await fetch(url, {headers:{'X-Api-Key':'4e4a8f7f-1c3e-4b5d-b27a-b80829632b48'}});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     const cards = (d.data || []).map(c => ({
@@ -428,6 +428,12 @@ async function loadSet(set) {
            || c.tcgplayer?.prices?.normal?.market
            || null
     }));
+    // White Flare: Archen #131 is classified as Uncommon in the TCG API but is an
+    // Illustration Rare on the physical card — inject manually to reach the correct total
+    if (set.tcgId === 'rsv10pt5' && !cards.find(c => c.num === '131')) {
+      cards.push({name:'Archen', num:'131', type:'IR', img:'https://images.pokemontcg.io/rsv10pt5/131_hires.png', price:null});
+      cards.sort((a,b) => parseInt(a.num) - parseInt(b.num));
+    }
     cardCache[set.name] = cards;
     try { localStorage.setItem(lk, JSON.stringify({ts: Date.now(), data: cards})); } catch(e) {}
   } catch(e) {
@@ -669,7 +675,7 @@ async function fetchLivePrices() {
     try {
       const q = `set.id:${set.tcgId} (rarity:"Illustration Rare" OR rarity:"Special Illustration Rare")`;
       const url = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(q)}&select=name,number,rarity,images,tcgplayer&pageSize=250&orderBy=number`;
-      const r = await fetch(url);
+      const r = await fetch(url, {headers:{'X-Api-Key':'4e4a8f7f-1c3e-4b5d-b27a-b80829632b48'}});
       if (!r.ok) throw new Error();
       const d = await r.json();
       const cards = d.data || [];
@@ -683,7 +689,7 @@ async function fetchLivePrices() {
         price: c.tcgplayer?.prices?.holofoil?.market || c.tcgplayer?.prices?.normal?.market || null
       }));
       cardCache[set.name] = cached;
-      try { localStorage.setItem(`cm_v8_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
+      try { localStorage.setItem(`cm_v9_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
 
       // Extract prices
       const prices = [];
