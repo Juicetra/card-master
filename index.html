@@ -171,6 +171,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .mbs{font-size:12px;font-weight:500}.mbv{font-size:12px;font-family:'DM Mono',monospace;color:var(--gold2);font-weight:600}
 .mbd{font-size:10px;font-family:'DM Mono',monospace;margin-top:1px;text-align:right}
 
+
+.sort-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.sort-label{font-size:10px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;white-space:nowrap}
+.sort-opts{display:flex;gap:4px;flex-wrap:wrap}
+.sb{padding:4px 10px;border-radius:99px;border:1px solid var(--s3);background:transparent;color:var(--t2);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.sb.active{background:var(--s3);color:var(--text);border-color:rgba(200,168,75,.4)}
+
 /* SEARCH */
 .sw{position:relative;margin-bottom:11px}
 .si{width:100%;background:var(--surface);border:1px solid var(--s3);border-radius:var(--rsm);padding:9px 12px 9px 35px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;outline:none;transition:border .2s}
@@ -262,6 +269,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <!-- SETS -->
 <div class="page" id="pg-sets">
+    <div class="sort-row" id="sortRow">
+    <span class="sort-label">Sort:</span>
+    <div class="sort-opts" id="sortOpts">
+      <button class="sb active" onclick="setSort(this,'default')">Default</button>
+      <button class="sb" onclick="setSort(this,'pct_desc')">% ↓</button>
+      <button class="sb" onclick="setSort(this,'pct_asc')">% ↑</button>
+      <button class="sb" onclick="setSort(this,'paid_desc')">Paid ↓</button>
+      <button class="sb" onclick="setSort(this,'paid_asc')">Paid ↑</button>
+      <button class="sb" onclick="setSort(this,'mkt_desc')">Value ↓</button>
+      <button class="sb" onclick="setSort(this,'mkt_asc')">Value ↑</button>
+    </div>
+  </div>
   <div class="sw"><span class="si-ic">⌕</span><input class="si" placeholder="Search sets…" id="setQ" oninput="renderSets()"></div>
   <div id="setsList"></div>
 </div>
@@ -355,6 +374,442 @@ const SETS = [
 ];
 const TOTAL_SPENT_CAD = 17927;
 
+// Per-card prices from spreadsheet (seeded into Paid field on first load)
+// Key: "SetName|CardName", Value: price in CAD
+const SHEET_PRICES = {
+  "SV Base|Tarountula":9,
+  "SV Base|Dolliv":8.1,
+  "SV Base|Toedscool":7,
+  "SV Base|Scovillain":5.4,
+  "SV Base|Armarouge":18,
+  "SV Base|Slowpoke":31.5,
+  "SV Base|Clauncher":7.2,
+  "SV Base|Wiglett":16,
+  "SV Base|Drowzee":45,
+  "SV Base|Ralts":35,
+  "SV Base|Kirlia":40,
+  "SV Base|Riolu":34.5,
+  "SV Base|Sandile":7,
+  "SV Base|Klawf":5,
+  "SV Base|Mabosstiff":8,
+  "SV Base|Bombirdier":6,
+  "SV Base|Kingambit":4.5,
+  "SV Base|Starly":9,
+  "SV Base|Skwovet":7.2,
+  "SV Base|Spidops ex":9,
+  "SV Base|Koraidon ex":22.5,
+  "SV Base|Iron Treads ex":6,
+  "SV Base|Arven":9.9,
+  "SV Base|Jacq":8,
+  "SV Base|Penny":9,
+  "Paldea Evolved|Heracross":30,
+  "Paldea Evolved|Tropius":10.4,
+  "Paldea Evolved|Sprigatito":39.5,
+  "Paldea Evolved|Floragato":19,
+  "Paldea Evolved|Bramblin":13,
+  "Paldea Evolved|Fletchinder":16,
+  "Paldea Evolved|Pyroar":13,
+  "Paldea Evolved|Crocalor":13.5,
+  "Paldea Evolved|Magikarp":431,
+  "Paldea Evolved|Marill":39,
+  "Paldea Evolved|Eiscue":22.5,
+  "Paldea Evolved|Quaxly":13.5,
+  "Paldea Evolved|Quaxwell":9,
+  "Paldea Evolved|Frigibax":24,
+  "Paldea Evolved|Baxcalibur":25,
+  "Paldea Evolved|Raichu":70.5,
+  "Paldea Evolved|Mismagius":36,
+  "Paldea Evolved|Gothorita":10.5,
+  "Paldea Evolved|Sandygast":8.1,
+  "Paldea Evolved|Rabsca":4.5,
+  "Paldea Evolved|Tinkatink":23,
+  "Paldea Evolved|Tinkatuff":27,
+  "Paldea Evolved|Paldean Tauros":16.2,
+  "Paldea Evolved|Sudowoodo":18,
+  "Paldea Evolved|Nacli":6,
+  "Paldea Evolved|Tyranitar":76.5,
+  "Paldea Evolved|Grafaiai":7,
+  "Paldea Evolved|Orthworm":7.2,
+  "Paldea Evolved|Rookidee":9,
+  "Paldea Evolved|Maushold":81,
+  "Paldea Evolved|Flamigo":13,
+  "Paldea Evolved|Farigiraf":9,
+  "Paldea Evolved|Dudunsparce":9,
+  "Paldea Evolved|Meowscarada ex":25.2,
+  "Paldea Evolved|Wo-Chien ex":13.5,
+  "Paldea Evolved|Chi-Yu ex":50,
+  "Paldea Evolved|Quaquaval ex":15,
+  "Paldea Evolved|Tinkaton ex":30,
+  "Paldea Evolved|Squawkabilly ex":12,
+  "Obsidian Flames|Gloom":18,
+  "Obsidian Flames|Ninetales":35.1,
+  "Obsidian Flames|Palafin":4.6,
+  "Obsidian Flames|Bellibolt":6.49,
+  "Obsidian Flames|Cleffa":31,
+  "Obsidian Flames|Larvitar":5,
+  "Obsidian Flames|Houndour":7.5,
+  "Obsidian Flames|Scizor":15,
+  "Obsidian Flames|Varoom":3.6,
+  "Obsidian Flames|Pidgey":13,
+  "Obsidian Flames|Pidgeotto":9,
+  "Obsidian Flames|Lechonk":7,
+  "Obsidian Flames|Eiscue ex":7,
+  "Obsidian Flames|Charizard ex":100,
+  "Obsidian Flames|Revavroom ex":5.7,
+  "Obsidian Flames|Pidgeot ex":20,
+  "Obsidian Flames|Geeta":4.5,
+  "151|Bulbasaur":57,
+  "151|Ivysaur":47,
+  "151|Charmander":86,
+  "151|Charmeleon":63,
+  "151|Squirtle":81,
+  "151|Wartortle":47,
+  "151|Caterpie":15,
+  "151|Pikachu":63,
+  "151|Nidoking":17,
+  "151|Psyduck":50,
+  "151|Poliwhirl":28,
+  "151|Machoke":17,
+  "151|Tangela":12,
+  "151|Mr. Mime":10,
+  "151|Omanyte":11,
+  "151|Dragonair":35,
+  "151|Venusaur ex":104,
+  "151|Charizard ex":322,
+  "151|Blastoise ex":117,
+  "151|Alakazam ex":59,
+  "151|Zapdos ex":90,
+  "151|Erika's Invitation":23,
+  "151|Giovanni's Charisma":18,
+  "Paradox Rift|Crustle":4.5,
+  "Paradox Rift|Toedscruel":7.2,
+  "Paradox Rift|Magby":18,
+  "Paradox Rift|Iron Moth":6.3,
+  "Paradox Rift|Mantyke":25.9,
+  "Paradox Rift|Vanillish":9,
+  "Paradox Rift|Wimpod":7.65,
+  "Paradox Rift|Veluza":6.3,
+  "Paradox Rift|Plusle":47,
+  "Paradox Rift|Minun":49.2,
+  "Paradox Rift|Blitzle":9,
+  "Paradox Rift|Joltik":17.9,
+  "Paradox Rift|Gimmighoul":11.5,
+  "Paradox Rift|Groudon":100.3,
+  "Paradox Rift|Mienshao":8.8,
+  "Paradox Rift|Minior":16,
+  "Paradox Rift|Garganacl":4.5,
+  "Paradox Rift|Slither Wing":5.6,
+  "Paradox Rift|Garbodor":13.4,
+  "Paradox Rift|Morpeko":30.5,
+  "Paradox Rift|Brute Bonnet":11.7,
+  "Paradox Rift|Steelix":36.9,
+  "Paradox Rift|Ferrothorn":6,
+  "Paradox Rift|Aegislash":9,
+  "Paradox Rift|Aipom":14.1,
+  "Paradox Rift|Loudred":14.6,
+  "Paradox Rift|Porygon-Z":11.7,
+  "Paradox Rift|Iron Jugulis":9.8,
+  "Paradox Rift|Tapu Koko ex":22,
+  "Paradox Rift|Iron Hands ex":20,
+  "Paradox Rift|Sandy Shocks ex":11,
+  "Paradox Rift|Roaring Moon ex":11,
+  "Paradox Rift|Iron Valiant ex":11,
+  "Paradox Rift|Flutter Mane ex":11,
+  "Paradox Rift|Mimikyu ex":22,
+  "Paradox Rift|Penny":22,
+  "Paldean Fates|Mew ex":900,
+  "Paldean Fates|Meowscarada ex":72,
+  "Paldean Fates|Skeledirge ex":11,
+  "Paldean Fates|Quaquaval ex":90,
+  "Temporal Forces|Bronzor":6.3,
+  "Temporal Forces|Reuniclus":13,
+  "Temporal Forces|Relicanth":8,
+  "Temporal Forces|Excadrill":10,
+  "Temporal Forces|Mudsdale":4.5,
+  "Temporal Forces|Arbok":18,
+  "Temporal Forces|Gastly":89,
+  "Temporal Forces|Metagross":30,
+  "Temporal Forces|Meltan":7,
+  "Temporal Forces|Lickitung":22,
+  "Temporal Forces|Minccino":14.8,
+  "Temporal Forces|Iron Leaves ex":29.7,
+  "Temporal Forces|Gouging Fire ex":39.5,
+  "Temporal Forces|Walking Wake ex":43,
+  "Temporal Forces|Iron Boulder ex":25,
+  "Temporal Forces|Raging Bolt ex":64.8,
+  "Temporal Forces|Morty's Conviction":54,
+  "Temporal Forces|Salvatore":25,
+  "Twilight Masquerade|Sunflora":9,
+  "Twilight Masquerade|Dipplin":9,
+  "Twilight Masquerade|Poltchageist":4.5,
+  "Twilight Masquerade|Torkoal":7,
+  "Twilight Masquerade|Infernape":11,
+  "Twilight Masquerade|Froslass":7.2,
+  "Twilight Masquerade|Phione":9,
+  "Twilight Masquerade|Heliolisk":4.5,
+  "Twilight Masquerade|Wattrel":4,
+  "Twilight Masquerade|Hisuian Growlithe":20.7,
+  "Twilight Masquerade|Probopass":4.5,
+  "Twilight Masquerade|Lairon":7.2,
+  "Twilight Masquerade|Eevee":76,
+  "Twilight Masquerade|Sinistcha ex":30,
+  "Twilight Masquerade|Teal Mask Ogerpon ex":23.5,
+  "Twilight Masquerade|Hearthflame Mask Ogerpon ex":15,
+  "Twilight Masquerade|Greninja ex":432,
+  "Twilight Masquerade|Carmine":85,
+  "Twilight Masquerade|Kieran":36,
+  "Shrouded Fable|Houndoom":47,
+  "Shrouded Fable|Horsea":37.8,
+  "Shrouded Fable|Dusknoir":25.5,
+  "Shrouded Fable|Cresselia":23.4,
+  "Shrouded Fable|Munkidori":45.93,
+  "Shrouded Fable|Okidogi":10.2,
+  "Shrouded Fable|Fezandipiti":9,
+  "Shrouded Fable|Zorua":9,
+  "Shrouded Fable|Cufant":9,
+  "Shrouded Fable|Bewear":9,
+  "Shrouded Fable|Pecharunt ex":9,
+  "Shrouded Fable|Tapu Bulu":9,
+  "Shrouded Fable|Duskull":9,
+  "Stellar Crown|Lileep":5,
+  "Stellar Crown|Raboot":9.9,
+  "Stellar Crown|Squirtle":79.5,
+  "Stellar Crown|Crabominable":3,
+  "Stellar Crown|Zeraora":11.16,
+  "Stellar Crown|Gulpin":11,
+  "Stellar Crown|Briar":16.7,
+  "Stellar Crown|Lacey":21,
+  "Stellar Crown|Bulbasaur":9,
+  "Surging Sparks|Exeggcute":6,
+  "Surging Sparks|Vivillon":5,
+  "Surging Sparks|Shiinotic":4.5,
+  "Surging Sparks|Larvesta":9,
+  "Surging Sparks|Ceruledge":22.5,
+  "Surging Sparks|Feebas":10,
+  "Surging Sparks|Bruxish":3.99,
+  "Surging Sparks|Stunfisk":9,
+  "Surging Sparks|Latios":9,
+  "Surging Sparks|Mesprit":10,
+  "Surging Sparks|Phanpy":7,
+  "Surging Sparks|Vibrava":3.99,
+  "Surging Sparks|Clobbopus":8,
+  "Surging Sparks|Alolan Dugtrio":7.5,
+  "Surging Sparks|Flapple":4,
+  "Surging Sparks|Appletun":9,
+  "Surging Sparks|Slakoth":11.7,
+  "Surging Sparks|Braviary":5.4,
+  "Surging Sparks|Pikachu ex":333,
+  "Surging Sparks|Latias ex":225,
+  "Surging Sparks|Hydreigon ex":49.5,
+  "Surging Sparks|Archaludon ex":17,
+  "Surging Sparks|Drayton":9,
+  "Surging Sparks|Lisia's Appeal":43,
+  "Prismatic Evolutions|Leafeon ex":280,
+  "Prismatic Evolutions|Teal Mask Ogerpon ex":27,
+  "Prismatic Evolutions|Flareon ex":198,
+  "Prismatic Evolutions|Ceruledge ex":121.5,
+  "Prismatic Evolutions|Hearthflame Mask Ogerpon ex":25,
+  "Prismatic Evolutions|Vaporeon ex":230,
+  "Prismatic Evolutions|Glaceon ex":230,
+  "Prismatic Evolutions|Wellspring Mask Ogerpon ex":22,
+  "Prismatic Evolutions|Jolteon ex":180,
+  "Prismatic Evolutions|Iron Hands ex":53,
+  "Prismatic Evolutions|Espeon ex":300,
+  "Prismatic Evolutions|Sylveon ex":225,
+  "Prismatic Evolutions|Iron Valiant ex":90,
+  "Prismatic Evolutions|Iron Crown ex":126,
+  "Prismatic Evolutions|Sandy Shocks ex":29,
+  "Prismatic Evolutions|Cornerstone Mask Ogerpon ex":22,
+  "Prismatic Evolutions|Umbreon ex":270,
+  "Prismatic Evolutions|Roaring Moon ex":135,
+  "Prismatic Evolutions|Pecharunt ex":63,
+  "Prismatic Evolutions|Dragapult ex":126,
+  "Prismatic Evolutions|Raging Bolt ex":117,
+  "Prismatic Evolutions|Eevee ex":261,
+  "Prismatic Evolutions|Bloodmoon Ursaluna ex":99,
+  "Prismatic Evolutions|Terapagos ex":81,
+  "Prismatic Evolutions|Amarys":27,
+  "Prismatic Evolutions|Crispin":36,
+  "Prismatic Evolutions|Gholdengo ex":29,
+  "Prismatic Evolutions|Kieran":45,
+  "Journey Together|Lycanroc":18,
+  "Journey Together|Komala":9,
+  "Journey Together|Toxapex":9,
+  "Journey Together|Passimian":9,
+  "Journey Together|Wishiwashi":9,
+  "Journey Together|Silvally":22.5,
+  "Journey Together|Jangmo-o":9,
+  "Journey Together|Decidueye":9,
+  "Journey Together|Incineroar":9,
+  "Journey Together|Primarina":13.5,
+  "Journey Together|Drampa":9,
+  "Journey Together|Incineroar ex":9,
+  "Journey Together|Primarina ex":9,
+  "Journey Together|Decidueye ex":22.5,
+  "Journey Together|Alolan Exeggutor ex":22.5,
+  "Journey Together|Lana":45,
+  "Destined Rivals|Yanma":9,
+  "Destined Rivals|Cynthia's Roserade":9,
+  "Destined Rivals|Shaymin":9,
+  "Destined Rivals|Crustle":9,
+  "Destined Rivals|Team Rocket's Spidops":9,
+  "Destined Rivals|Hydrapple":9,
+  "Destined Rivals|Rapidash":9,
+  "Destined Rivals|Ethan's Typhlosion":9,
+  "Destined Rivals|Team Rocket's Houndoom":9,
+  "Destined Rivals|Blaziken":9,
+  "Destined Rivals|Misty's Psyduck":9,
+  "Destined Rivals|Misty's Lapras":9,
+  "Destined Rivals|Clamperl":9,
+  "Destined Rivals|Electrike":9,
+  "Destined Rivals|Rotom":9,
+  "Destined Rivals|Team Rocket's Orbeetle":9,
+  "Destined Rivals|Team Rocket's Weezing":9,
+  "Destined Rivals|Team Rocket's Murkrow":9,
+  "Destined Rivals|Zamazenta":54,
+  "Destined Rivals|Team Rocket's Raticate":9,
+  "Destined Rivals|Team Rocket's Meowth":9,
+  "Destined Rivals|Kangaskhan":9,
+  "Destined Rivals|Arven's Greedent":9,
+  "Destined Rivals|Yanmega ex":72,
+  "Destined Rivals|Team Rocket's Moltres ex":153,
+  "Destined Rivals|Ethan's Ho-Oh ex":63,
+  "Destined Rivals|Team Rocket's Mewtwo ex":198,
+  "Destined Rivals|Cynthia's Garchomp ex":237,
+  "Destined Rivals|Team Rocket's Nidoking ex":117,
+  "Destined Rivals|Team Rocket's Crobat ex":84,
+  "Destined Rivals|Arven's Mabosstiff ex":41,
+  "Destined Rivals|Team Rocket's Ariana":37,
+  "Destined Rivals|Team Rocket's Giovanni":45,
+  "White Flare|Sewaddle":13,
+  "White Flare|Swadloon":11,
+  "White Flare|Leavanny":26,
+  "White Flare|Cottonee":5,
+  "White Flare|Deerling":18,
+  "White Flare|Sawsbuck":26,
+  "White Flare|Shelmet":6.3,
+  "White Flare|Virizion":30,
+  "White Flare|Tepig":10.8,
+  "White Flare|Pignite":10.8,
+  "White Flare|Emboar":42,
+  "White Flare|Pansear":12,
+  "White Flare|Simisear":9,
+  "White Flare|Litwick":19,
+  "White Flare|Lampent":13,
+  "White Flare|Chandelure":56,
+  "White Flare|Heatmor":5,
+  "White Flare|Oshawott":66,
+  "White Flare|Dewott":20,
+  "White Flare|Samurott":41,
+  "White Flare|Ducklett":17.2,
+  "White Flare|Swanna":11,
+  "White Flare|Vanillite":12,
+  "White Flare|Vanillish":11,
+  "White Flare|Vanilluxe":36,
+  "White Flare|Blitzle":8.6,
+  "White Flare|Zebstrika":22.49,
+  "White Flare|Joltik":26,
+  "White Flare|Galvantula":18,
+  "White Flare|Stunfisk":6,
+  "White Flare|Woobat":11,
+  "White Flare|Swoobat":10,
+  "White Flare|Sigilyph":11,
+  "White Flare|Yamask":9,
+  "White Flare|Cofagrigus":13,
+  "White Flare|Frillish":11,
+  "White Flare|Roggenrola":9,
+  "White Flare|Boldore":9,
+  "White Flare|Gigalith":9,
+  "White Flare|Sawk":9,
+  "White Flare|Mienfoo":9,
+  "White Flare|Mienshao":13,
+  "White Flare|Terrakion":13,
+  "White Flare|Purrloin":9,
+  "White Flare|Liepard":9,
+  "White Flare|Scraggy":9,
+  "White Flare|Scrafty":13,
+  "White Flare|Trubbish":9,
+  "White Flare|Garbodor":13,
+  "White Flare|Zorua":18,
+  "White Flare|Zoroark":13,
+  "White Flare|Vullaby":9,
+  "White Flare|Mandibuzz":13,
+  "White Flare|Deino":9,
+  "White Flare|Zweilous":9,
+  "White Flare|Ferroseed":9,
+  "White Flare|Ferrothorn":9,
+  "White Flare|Durant":9,
+  "White Flare|Druddigon":9,
+  "White Flare|Patrat":9,
+  "White Flare|Watchog":9,
+  "White Flare|Lillipup":9,
+  "White Flare|Herdier":9,
+  "White Flare|Stoutland":9,
+  "White Flare|Whimsicott ex":9,
+  "White Flare|Reshiram ex":13,
+  "White Flare|Keldeo ex":13,
+  "White Flare|Jellicent ex":9,
+  "White Flare|Hydreigon ex":18,
+  "White Flare|Bouffalant ex":9,
+  "White Flare|Hilda":9,
+  "Black Bolt|Rufflet":9,
+  "Black Bolt|Braviary":9,
+  "Black Bolt|Timburr":9,
+  "Black Bolt|Gurdurr":13,
+  "Black Bolt|Conkeldurr":9,
+  "Black Bolt|Drilbur":9,
+  "Black Bolt|Excadrill":9,
+  "Black Bolt|Cubchoo":9,
+  "Black Bolt|Beartic":9,
+  "Black Bolt|Cryogonal":9,
+  "Black Bolt|Pansage":9,
+  "Black Bolt|Simisage":9,
+  "Black Bolt|Cottonee":9,
+  "Black Bolt|Foongus":9,
+  "Black Bolt|Amoonguss":9,
+  "Black Bolt|Karrablast":9,
+  "Black Bolt|Joltik":9,
+  "Black Bolt|Galvantula":9,
+  "Black Bolt|Beheeyem":9,
+  "Black Bolt|Elgyem":9,
+  "Black Bolt|Tympole":9,
+  "Black Bolt|Palpitoad":9,
+  "Black Bolt|Seismitoad":9,
+  "Black Bolt|Tirtouga":9,
+  "Black Bolt|Carracosta":9,
+  "Black Bolt|Dwebble":9,
+  "Black Bolt|Crustle":9,
+  "Black Bolt|Minccino":9,
+  "Black Bolt|Cinccino":9,
+  "Black Bolt|Woobat":9,
+  "Black Bolt|Swoobat":9,
+  "Black Bolt|Ducklett":9,
+  "Black Bolt|Swanna":9,
+  "Black Bolt|Basculin":9,
+  "Black Bolt|Alomomola":9,
+  "Black Bolt|Fraxure":9,
+  "Black Bolt|Haxorus":9,
+  "Black Bolt|Druddigon":9,
+  "Black Bolt|Golurk":9,
+  "Black Bolt|Bisharp":9,
+  "Black Bolt|Pawniard":9,
+  "Black Bolt|Mandibuzz":9,
+  "Black Bolt|Vullaby":9,
+  "Black Bolt|Bouffalant":9,
+  "Black Bolt|Victini":9,
+  "Black Bolt|Zekrom":18,
+  "Black Bolt|Klinklang":9,
+  "Black Bolt|Klink":9,
+  "Black Bolt|Klang":9,
+  "Black Bolt|Cobalion ex":9,
+  "Black Bolt|Reshiram ex":9,
+  "Black Bolt|Zekrom ex":9,
+  "Black Bolt|Bianca's Devotion":9,
+  "Black Bolt|N's Resolve":9,
+  "Black Bolt|Cheren's Care":9,
+  "Black Bolt|N's Plan":9
+};
+
 // Cards originally needing collection — verified against Pokemon TCG API card numbers
 // (API numbering differs from physical card numbers for newer English sets)
 const ORIG_NEEDED = new Set([
@@ -442,8 +897,31 @@ async function loadSet(set) {
   delete cacheLoading[set.name];
 }
 
+
+// ─── SEED SPREADSHEET PRICES ─────────────────────────────────────────────────
+// Pre-populate pricePaid for owned cards that have no saved price yet.
+// Runs once after card cache is loaded. Uses card NAME for matching since
+// API card numbers differ from physical card numbers in some sets.
+function seedPricesFromSheet() {
+  const seeded = localStorage.getItem('cm_seeded_v9');
+  if (seeded) return; // only seed once
+  SETS.forEach(s => {
+    (cardCache[s.name] || []).forEach(c => {
+      if (!isOwned(s.name, c.num)) return; // skip needed cards
+      const existing = getCS(s.name, c.num);
+      if (existing && existing.pricePaid) return; // already has a price
+      const sheetPrice = SHEET_PRICES[s.name + '|' + c.name];
+      if (sheetPrice && sheetPrice > 0) {
+        setCS(s.name, c.num, { ...(existing || {}), pricePaid: sheetPrice });
+      }
+    });
+  });
+  localStorage.setItem('cm_seeded_v9', '1');
+}
+
 // ─── STATE ────────────────────────────────────────────────────
 let cur = 'CAD', src = 'est', usdCad = 1.38;
+let setsSort = 'default';
 let mktCAD = null, cardPricesUSD = {};
 let fetched = false, filt = 'all';
 let dpIdx = null, dpFilt = 'all';
@@ -759,6 +1237,25 @@ async function doRefresh() {
     (src === 'live' ? 'Pokemon TCG API' : 'Estimates') + ' · ' + cur + ' · 1 USD = ' + usdCad.toFixed(3) + ' CAD · ' + ts;
 }
 
+
+function setSort(btn, mode) {
+  setsSort = mode;
+  document.querySelectorAll('.sb').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSets();
+}
+
+function getSetPaidCAD(set) {
+  let total = 0;
+  (cardCache[set.name] || []).forEach(c => {
+    if (isOwned(set.name, c.num)) {
+      const p = getPaid(set.name, c.num);
+      if (p) total += p;
+    }
+  });
+  return total || set.spentCAD;
+}
+
 // ─── DISPLAY UPDATES ──────────────────────────────────────────
 function refreshAll() { updateOv(); renderSets(); renderNeed(); updateVal(); }
 
@@ -832,8 +1329,14 @@ function renderTopSets() {
 
 function renderSets() {
   const q = (document.getElementById('setQ') || { value: '' }).value.toLowerCase();
-  document.getElementById('setsList').innerHTML = SETS
-    .filter(s => s.name.toLowerCase().includes(q))
+  let sortedSets = SETS.filter(s => s.name.toLowerCase().includes(q));
+  if (setsSort === 'pct_desc') sortedSets.sort((a,b) => getPct(b) - getPct(a));
+  else if (setsSort === 'pct_asc') sortedSets.sort((a,b) => getPct(a) - getPct(b));
+  else if (setsSort === 'paid_desc') sortedSets.sort((a,b) => getSetPaidCAD(b) - getSetPaidCAD(a));
+  else if (setsSort === 'paid_asc') sortedSets.sort((a,b) => getSetPaidCAD(a) - getSetPaidCAD(b));
+  else if (setsSort === 'mkt_desc') sortedSets.sort((a,b) => (mktCAD?.[b.name]||0) - (mktCAD?.[a.name]||0));
+  else if (setsSort === 'mkt_asc') sortedSets.sort((a,b) => (mktCAD?.[a.name]||0) - (mktCAD?.[b.name]||0));
+  document.getElementById('setsList').innerHTML = sortedSets
     .map(s => {
       const pct = getPct(s);
       const cards = cardCache[s.name] || [];
@@ -935,6 +1438,7 @@ setTimeout(() => { document.getElementById('progBar').style.width = '86.58%'; },
   for (const set of SETS) {
     await loadSet(set);
     refreshAll(); // update counts progressively as each set loads
+    seedPricesFromSheet(); // seed spreadsheet prices once all cards loaded
   }
 })();
 </script>
