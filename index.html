@@ -688,6 +688,11 @@ async function fetchLivePrices() {
         img: c.images?.large || c.images?.small || '',
         price: c.tcgplayer?.prices?.holofoil?.market || c.tcgplayer?.prices?.normal?.market || null
       }));
+      // White Flare: Archen #131 is classified as Uncommon in the API but is an IR on the physical card
+      if (set.tcgId === 'rsv10pt5' && !cached.find(c => c.num === '131')) {
+        cached.push({name:'Archen', num:'131', type:'IR', img:'https://images.pokemontcg.io/rsv10pt5/131_hires.png', price:null});
+        cached.sort((a,b) => parseInt(a.num) - parseInt(b.num));
+      }
       cardCache[set.name] = cached;
       try { localStorage.setItem(`cm_v9_${set.tcgId}`, JSON.stringify({ ts: Date.now(), data: cached })); } catch(e) {}
 
