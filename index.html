@@ -903,20 +903,19 @@ async function loadSet(set) {
 // Runs once after card cache is loaded. Uses card NAME for matching since
 // API card numbers differ from physical card numbers in some sets.
 function seedPricesFromSheet() {
-  const seeded = localStorage.getItem('cm_seeded_v9');
+  const seeded = localStorage.getItem('cm_seeded_v10');
   if (seeded) return; // only seed once
   SETS.forEach(s => {
     (cardCache[s.name] || []).forEach(c => {
       if (!isOwned(s.name, c.num)) return; // skip needed cards
       const existing = getCS(s.name, c.num);
-      if (existing && existing.pricePaid) return; // already has a price
       const sheetPrice = SHEET_PRICES[s.name + '|' + c.name];
       if (sheetPrice && sheetPrice > 0) {
         setCS(s.name, c.num, { ...(existing || {}), pricePaid: sheetPrice });
       }
     });
   });
-  localStorage.setItem('cm_seeded_v9', '1');
+  localStorage.setItem('cm_seeded_v10', '1');
 }
 
 // ─── STATE ────────────────────────────────────────────────────
